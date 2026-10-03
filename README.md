@@ -93,7 +93,7 @@ Every run shows a score on its summary screen. When signed in, each finished run
 
 ## Stage 2 documents
 
-`docs/STAGE2_SPEC.md` (design), `docs/SETUP_RUNBOOK.md` (console and command-line steps), `docs/CURRENT_STATE.md` (baseline and progress).
+`docs/STAGE2_SPEC.md` (design), `docs/SETUP_RUNBOOK.md` (console and command-line steps), `docs/CURRENT_STATE.md` (baseline and progress). `CLAUDE.md` holds the working rules for Claude Code. `docs/issues/` holds the outstanding work, one file per GitHub issue.
 
 ## Developer tests
 
