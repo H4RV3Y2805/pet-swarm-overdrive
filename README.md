@@ -100,7 +100,7 @@ Not needed to play. Needs Node.js 22 or later.
 ```
 npm ci                              installs Playwright (developer dependency only)
 npx playwright install chromium     one-off browser download
-npm test                            syntax check, 40 logic tests, 48 browser tests, 28 online tests
+npm test                            syntax check, 42 logic tests, 48 browser tests, 28 online tests
 ```
 
 `npm run check`, `npm run test:logic`, `npm run test:browser` and `npm run test:online` run each part alone.

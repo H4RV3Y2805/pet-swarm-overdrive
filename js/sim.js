@@ -64,7 +64,7 @@
     var R = {
       id: Date.now().toString(36) + Math.floor(Math.random() * 1e6).toString(36),
       cfg: cfg, seedStr: seedStr, challenge: cfg.challenge || null,
-      rngSpawn: PSO.makeRng(base ^ 0x9e3779b9), rngOffer: PSO.makeRng(base ^ 0x85ebca6b), rngCombat: PSO.makeRng(base ^ 0xc2b2ae35),
+      rngSpawn: PSO.makeRng(base ^ 0x9e3779b9), rngOffer: PSO.makeRng(base ^ 0x85ebca6b), rngCombat: PSO.makeRng(base ^ 0xc2b2ae35), rngDrop: PSO.makeRng(base ^ 0x27d4eb2f),
       arena: arena, arenaId: arenaId, diff: D.DIFFS[diffId], diffId: diffId, char: ch, charId: cfg.char, spec: spec, specId: cfg.spec,
       mods: mods, res: res,
       t: 0, state: 'play', won: false, endless: false,
@@ -433,9 +433,10 @@
   /* ---------- Pickups ---------- */
   Sim.addGem = function (R, x, y, v) {
     if (R.gems.length >= BAL.gemCap) {       // merge instead of dropping: value is never lost
-      var g = R.gems[Math.floor(fx.next() * R.gems.length)]; g.v += v; return;
+      var g = R.gems[Math.floor(R.rngDrop.next() * R.gems.length)]; g.v += v; return;
     }
-    R.gems.push({ x: x + (fx.next() - 0.5) * 10, y: y + (fx.next() - 0.5) * 10, v: v, mag: false, sp: 240 });
+    /* Gem positions decide when XP is collected, so they use a seeded stream, not the cosmetic one. */
+    R.gems.push({ x: x + (R.rngDrop.next() - 0.5) * 10, y: y + (R.rngDrop.next() - 0.5) * 10, v: v, mag: false, sp: 240 });
   };
   Sim.collectGem = function (R, g) {
     Sim.gainXp(R, g.v); R.gemsGot++;
@@ -527,7 +528,7 @@
     R.bossKills++; R.boss = null;
     if (R.bossesDefeated.indexOf(e.type) < 0) R.bossesDefeated.push(e.type);
     R.pickups.push({ kind: 'chest', x: e.x, y: e.y, t: 0 });
-    for (var i = 0; i < 24; i++) Sim.addGem(R, e.x + (fx.next() - 0.5) * 160, e.y + (fx.next() - 0.5) * 160, Math.ceil(e.xp / 24));
+    for (var i = 0; i < 24; i++) Sim.addGem(R, e.x + (R.rngDrop.next() - 0.5) * 160, e.y + (R.rngDrop.next() - 0.5) * 160, Math.ceil(e.xp / 24));
     R.eshots.length = 0; R.zones.length = 0;
     Sim.shake(R, 14); Sim.ring(R, e.x, e.y, 30, 320, 0.6, '#ffffff', true);
     Sim.banner(R, e.name + ' defeated!', 'good');

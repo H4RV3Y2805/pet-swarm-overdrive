@@ -153,5 +153,17 @@ console.log('Save validation and reward banking');
   Save.data.sparks = 0; ok(Save.buyResearch('r_vital') === false, 'cannot buy research without Sparks');
 })();
 
+console.log('Seeded replay');
+(function () {
+  function sig(seed) {
+    fresh(); PSO.Bot.rng = PSO.makeRng(77); PSO.Bot.react = 0; PSO.Bot.noise = 0; PSO.Bot.hold = 0; PSO.Bot.last = { mx: 0, my: 0 };
+    var R = h.runOnce({ char: 'rook', pets: ['zap', 'ember'], spec: 'arsenal', arena: 'meadow', diff: 'normal', seed: seed }, { maxMinutes: 3 }).R;
+    return [R.t.toFixed(4), R.kills, R.level, R.gemsGot, R.enemies.length, R.player.x.toFixed(4), R.player.y.toFixed(4), Math.round(R.player.hp * 1000)].join('|');
+  }
+  var a = sig('REPLAY1'), b = sig('REPLAY1'), c = sig('REPLAY2');
+  ok(a === b, 'same seed and same inputs give an identical run, whatever the cosmetic generator does (' + a + ')');
+  ok(a !== c, 'a different seed gives a different run');
+})();
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
