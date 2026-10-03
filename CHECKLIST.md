@@ -20,6 +20,14 @@
 - [x] Synthesised sound effects and music (no audio files)
 - [x] Spatial hash grid, pooled projectiles, capped and merged gems, capped particles and damage numbers
 
+## Stage 2 progress
+
+- [x] Source control on GitHub, `v1.0.0` tagged at the Stage 1 delivery
+- [x] GitHub Pages serving `main`
+- [x] `package.json` (developer dependency only) and CI workflow: syntax check, logic tests, browser tests
+- [ ] Firebase project, Google sign-in
+- [ ] Firestore leaderboards and security rules
+
 ## Test results
 
 Environment for all tests: Linux sandbox, 1 CPU core, Node 22, headless Chromium 141 via Playwright,
