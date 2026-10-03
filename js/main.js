@@ -136,6 +136,7 @@
     UI.init(Game);
     Game.bot = /bot/.test(window.location.hash);
     UI.showMenu();
+    if (PSO.Online) PSO.Online.init();   /* does nothing on file:// */
     last = performance.now();
     window.requestAnimationFrame(frame);
   }

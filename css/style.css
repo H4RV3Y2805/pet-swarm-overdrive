@@ -130,3 +130,8 @@ input.seed { font: inherit; font-weight: 700; padding: 9px 12px; border-radius: 
 #toast.show { opacity: 1; transform: translate(-50%, 0); }
 #toast.bad { border-color: var(--danger); }
 @media (prefers-reduced-motion: reduce) { #toast, .btn, .card { transition: none; } .card.offer:hover { transform: none; } }
+
+/* Online panel on the main menu (hosted version only) */
+.online { max-width: 620px; width: 100%; text-align: left; }
+.online-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.online-text { font-weight: 700; }

@@ -9,6 +9,8 @@ Snapshot date: 2026-10-03. Stage 1 figures below are as reported when Stage 1 wa
 - Site live at `https://h4rv3y2805.github.io/pet-swarm-overdrive/`.
 - Firebase project `bath-n-guess` (shared with another app on Realtime Database): web app added, Google sign-in enabled, `h4rv3y2805.github.io` authorised, Firestore created (`(default)`, Standard, `europe-west2`, production mode). No rules or indexes deployed yet.
 - All design decisions closed: see `docs/STAGE2_SPEC.md` section 13.
+- Milestone 2 closed: deploy workflow live, only `index.html`, `css/`, `js/` published, save export and import checked by Len.
+- Milestone 3 code: `js/firebase-config.js`, `js/online.js`, menu sign-in panel, `firestore.rules`, indexes. 28 online tests against a fake SDK (`npm run test:online`). Browser suite is now 48 tests; syntax check covers 23 files.
 
 ## What exists
 
@@ -65,7 +67,9 @@ Real hardware with a GPU was not measured.
 - A full run on the Pages URL, and save export from `file://` then import on Pages (Len, milestone 2).
 - Whether the three Firebase compat files load from gstatic at 12.19.0 (not reachable from the sandbox).
 - Kill rate during boss fights, needed to confirm the score's speed term.
-- The Firestore rules draft.
+- The Firestore rules (in the repo, not emulator-tested).
+- Sign-in against real Firebase. Only a fake SDK has been used.
+- Exact seeded replay. Gem scatter in `js/sim.js` (about lines 436 to 438) draws from the cosmetic generator `PSO.fxRng`, which is seeded from `Math.random`. Two runs of one seed with identical input therefore diverge (measured headless: 485 and 491 kills at 90 s). Present since Stage 1. Not caused by the online layer.
 
 ## Facts the Stage 2 design depends on
 

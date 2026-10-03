@@ -77,9 +77,17 @@ js/render.js          world and HUD rendering
 js/ui.js              menus
 js/main.js            game loop, input, pause, run flow
 js/bot.js             autoplayer for testing only (open index.html#bot)
+js/firebase-config.js Firebase project identifiers (public by design; access is set by firestore.rules)
+js/online.js          optional online layer: Google sign-in and player list check. Inert on file://
+firestore.rules       who may read and write leaderboard data
+firestore.indexes.json, firebase.json, .firebaserc   Firestore indexes and Firebase CLI settings
 tools/                developer tests (need Node.js; browser tests also need Playwright). Not needed to play.
 CHECKLIST.md          what is done, what was tested, ideas for later
 ```
+
+## Online features (hosted version only)
+
+Played from the GitHub Pages address, the main menu shows an optional "Sign in with Google" panel for the family leaderboards. Only accounts on the player list are accepted. The game stores a player ID and a nickname chosen by Len: no email, Google name or photo. Opened by double-click (`file://`), the game shows no sign-in panel and makes no network requests. If the sign-in service cannot be reached, the hosted game still plays and says leaderboards are unavailable.
 
 ## Stage 2 documents
 
@@ -92,11 +100,12 @@ Not needed to play. Needs Node.js 22 or later.
 ```
 npm ci                              installs Playwright (developer dependency only)
 npx playwright install chromium     one-off browser download
-npm test                            syntax check, 40 logic tests, 47 browser tests
+npm test                            syntax check, 40 logic tests, 48 browser tests, 28 online tests
 ```
 
-`npm run check`, `npm run test:logic` and `npm run test:browser` run each part alone.
-GitHub Actions (`.github/workflows/ci.yml`) runs the same three steps on every push and pull request to `main`.
+`npm run check`, `npm run test:logic`, `npm run test:browser` and `npm run test:online` run each part alone.
+The online tests serve the game on localhost and swap the Firebase SDK for a fake; they never contact the real project.
+GitHub Actions (`.github/workflows/ci.yml`) runs the same four steps on every push and pull request to `main`.
 
 ## Tuning
 

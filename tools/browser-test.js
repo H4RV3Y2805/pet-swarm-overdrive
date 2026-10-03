@@ -26,6 +26,7 @@ const ok = (c, n) => { if (c) { pass++; console.log('  ok   ' + n); } else { fai
   ok(await page.isVisible('text=Play'), 'main menu appears');
   ok(reqs.every(u => u.startsWith('file://')), 'only local file requests (' + reqs.length + ' files, 0 network)');
   ok(await page.isVisible('text=Next unlock goal'), 'next unlock goal with progress is shown');
+  ok(await ev(() => PSO.Online.state === 'offline' && PSO.Online.available === false) && !(await page.isVisible('text=Sign in with Google')), 'online layer is inert on file:// (no sign-in control)');
   await page.click('text=Play'); await wait(150);
   ok(await page.isVisible('text=Locked. Reach level 10 in one run.'), 'locked content shows its unlock condition');
   ok(await page.isVisible('text=Every 1.6s zaps the nearest enemy for 14 damage'), 'pet cards state exactly what the pet does');

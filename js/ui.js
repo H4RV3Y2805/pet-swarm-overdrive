@@ -58,7 +58,24 @@
 
   UI.init = function (g) {
     game = g; root = document.getElementById('ui'); toastEl = document.getElementById('toast');
+    /* Redraw the main menu when the sign-in state changes, but only if the menu is what is showing. */
+    if (PSO.Online) PSO.Online.onChange(function () { if (UI.current === 'menu') UI.showMenu(); });
   };
+
+  /* ---------- Online panel (hosted version only; absent on file://) ---------- */
+  function onlinePanel() {
+    var O = PSO.Online;
+    if (!O || O.state === 'offline') return null;
+    var box = el('div', 'panel online'), row = el('div', 'online-row');
+    add(box, el('div', 'card-kind', 'Family leaderboards (optional)'));
+    if (O.state === 'checking') add(row, el('span', 'online-text', 'Checking sign-in...'));
+    else if (O.state === 'allowed') add(row, el('span', 'online-text', 'Signed in as ' + O.nick), button('Sign out', 'ghost', O.signOut));
+    else if (O.state === 'error') add(row, el('span', 'online-text', 'Leaderboards unavailable. The game still works.'), button('Try again', 'ghost', O.retry));
+    else add(row, el('span', 'online-text', 'Sign in to share scores with the family.'), button('Sign in with Google', '', O.signIn));
+    box.appendChild(row);
+    if (O.message) box.appendChild(el('div', O.state === 'signedOut' ? 'hint' : 'error', O.message));
+    return box;
+  }
 
   /* ---------- Main menu ---------- */
   UI.showMenu = function () {
@@ -77,6 +94,7 @@
       add(box, el('div', 'card-kind', 'Next unlock goal'), el('div', 'card-title', goal.name + ': ' + goal.desc), progressBar(p.cur, p.goal, fmt), el('div', 'card-text', 'Reward: ' + goal.reward));
     } else add(box, el('div', 'card-title', 'Every achievement is done. Try Overdrive difficulty or a seed challenge with a friend!'));
     s.appendChild(box);
+    add(s, onlinePanel());
     if (!Save.storageOk) s.appendChild(el('div', 'error', 'This browser is blocking local storage for local files, so progress cannot be saved automatically. Use Settings, Export save to keep your progress.'));
     if (Save.lastError) { s.appendChild(el('div', 'error', Save.lastError)); Save.lastError = ''; }
     s.appendChild(el('div', 'foot', 'Runs: ' + sv.life.runs + '   Wins: ' + sv.life.wins + '   Enemies defeated: ' + sv.life.kills));
