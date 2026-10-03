@@ -24,6 +24,7 @@
 
 - [x] Source control on GitHub, `v1.0.0` tagged at the Stage 1 delivery
 - [x] GitHub Pages serving `main`
+- [x] Deploy workflow (`.github/workflows/deploy.yml`): publishes `index.html`, `css/`, `js/` only
 - [x] `package.json` (developer dependency only) and CI workflow: syntax check, logic tests, browser tests
 - [x] Stage 2 documents in `docs/`, all design decisions closed
 - [x] Firebase console setup: web app, Google provider, authorised domain, Firestore created (no rules deployed yet)
