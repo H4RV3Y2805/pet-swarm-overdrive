@@ -97,13 +97,23 @@ const ok = (c, n) => { if (c) { pass++; console.log('  ok   ' + n); } else { fai
   ok(await ev(() => PSO.Game.R.state === 'play' && PSO.Game.R.t < 1 && PSO.Game.R.tut === null), 'a new run starts cleanly after a death');
 
   console.log('Victory and endless');
-  let ff = await ev(() => PSO.Game.debugFastForward(725)); await drain();
-  if (ff.state === 'dead') { console.log('  (autoplayer died at ' + ff.t.toFixed(0) + 's; restarting with a boosted test player)'); await page.click('text=Play again'); await wait(200); }
-  await ev(() => { const R = PSO.Game.R; R.char = Object.assign({}, R.char, { hp: 100000 }); PSO.Sim.recalc(R); R.player.hp = R.stats.maxHp; });   // test-only: make sure we reach the final boss
-  for (let i = 0; i < 6; i++) { ff = await ev(() => { const R = PSO.Game.R; return R.state === 'play' || R.state === 'levelup' ? PSO.Game.debugFastForward(Math.max(5, 722 - R.t)) : { state: R.state, t: R.t }; }); await drain(); if (await ev(() => PSO.Game.R.boss && PSO.Game.R.boss.final)) break; }
+  /* The seed here is random, so two things vary from run to run: the autoplayer sometimes dies before 12:00,
+     and a strong build can kill the Hex Engine within seconds of its spawn. So: boost the test player before
+     fast-forwarding, never fast-forward past the spawn (go to 11:55, then creep forward in quarter-second
+     steps), and stop the moment the final boss exists. */
+  const finalBossUp = () => ev(() => !!(PSO.Game.R.boss && PSO.Game.R.boss.final));
+  const boost = () => ev(() => { const R = PSO.Game.R; R.char = Object.assign({}, R.char, { hp: 100000 }); PSO.Sim.recalc(R); R.player.hp = R.stats.maxHp; });   // test-only: make sure we reach the final boss
+  let runsExpected = 2;                                     // the earlier death, plus this run
+  await boost();
+  let ff = await ev(() => PSO.Game.debugFastForward(715)); await drain();
+  if (ff.state === 'dead') { console.log('  (boosted autoplayer still died at ' + ff.t.toFixed(0) + 's; restarting)'); await page.click('text=Play again'); await wait(200); await boost(); runsExpected = 3; }
+  for (let i = 0; i < 60 && !(await finalBossUp()); i++) {
+    await ev(() => { const R = PSO.Game.R; if (R.state === 'play' || R.state === 'levelup') PSO.Game.debugFastForward(R.t < 719 ? 719 - R.t : 0.25); });
+    await drain();
+  }
   ok(await ev(() => !!(PSO.Game.R.boss && PSO.Game.R.boss.final)), 'final boss (Hex Engine) spawns at 12:00');
   ok(await ev(() => PSO.Game.R.bossesDefeated.indexOf('gloop') >= 0), 'first boss (Gloop King) was fought and defeated on the way');
-  await ev(() => { const R = PSO.Game.R; PSO.Sim.dmgEnemy(R, R.boss, 1e9, 'bolt', {}); }); await wait(400);
+  await ev(() => { const R = PSO.Game.R; if (R.boss) PSO.Sim.dmgEnemy(R, R.boss, 1e9, 'bolt', {}); }); await wait(400);
   ok(await page.isVisible('text=Victory!') && await page.isVisible('text=Keep going: endless mode'), 'victory summary with endless option');
   const sparksWin = await ev(() => PSO.Save.data.sparks);
   ok(await ev(() => PSO.Save.data.ach.ach_win === true && PSO.Save.data.life.wins === 1), 'win recorded, achievement unlocked');
@@ -113,7 +123,7 @@ const ok = (c, n) => { if (c) { pass++; console.log('  ok   ' + n); } else { fai
   await ev(() => { const R = PSO.Game.R; R.revives = 0; R.player.iframes = 0; R.player.hp = 1; R.stats.dmgTaken = 1; R.player.shield = 0; R.barrierReady = false; PSO.Sim.hurtPlayer(R, 1e9, null); }); await wait(400);
   ok(await page.isVisible('text=Endless run over'), 'dying in endless shows the final summary');
   const sparksEnd = await ev(() => PSO.Save.data.sparks);
-  ok(sparksEnd >= sparksWin && sparksEnd - sparksWin < 40 && await ev(() => PSO.Save.data.life.wins === 1 && PSO.Save.data.life.runs === 2), 'endless banks only the extra progress (+' + (sparksEnd - sparksWin) + '), win not counted twice');
+  ok(sparksEnd >= sparksWin && sparksEnd - sparksWin < 40 && await page.evaluate(n => PSO.Save.data.life.wins === 1 && PSO.Save.data.life.runs === n, runsExpected), 'endless banks only the extra progress (+' + (sparksEnd - sparksWin) + '), win not counted twice');
   await page.click('text=Main menu'); await wait(200);
 
   console.log('Research, export, import, invalid import, reset');
