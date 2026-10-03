@@ -25,7 +25,9 @@
 - [x] Source control on GitHub, `v1.0.0` tagged at the Stage 1 delivery
 - [x] GitHub Pages serving `main`
 - [x] `package.json` (developer dependency only) and CI workflow: syntax check, logic tests, browser tests
-- [ ] Firebase project, Google sign-in
+- [x] Stage 2 documents in `docs/`, all design decisions closed
+- [x] Firebase console setup: web app, Google provider, authorised domain, Firestore created (no rules deployed yet)
+- [ ] Google sign-in in the game
 - [ ] Firestore leaderboards and security rules
 
 ## Test results

@@ -81,6 +81,10 @@ tools/                developer tests (need Node.js; browser tests also need Pla
 CHECKLIST.md          what is done, what was tested, ideas for later
 ```
 
+## Stage 2 documents
+
+`docs/STAGE2_SPEC.md` (design), `docs/SETUP_RUNBOOK.md` (console and command-line steps), `docs/CURRENT_STATE.md` (baseline and progress).
+
 ## Developer tests
 
 Not needed to play. Needs Node.js 22 or later.
