@@ -165,5 +165,51 @@ console.log('Seeded replay');
   ok(a !== c, 'a different seed gives a different run');
 })();
 
+console.log('Leaderboard score, boards, run summary');
+(function () {
+  fresh();
+  var SC = D.BAL.score, En = PSO.Enemies;
+  function at(t, kills, cfg) { var R = mkRun(cfg); R.t = t; R.kills = kills; return R; }
+  function boss(R, type, hpMult, fight, killsDuring) { var e = En.spawnBoss(R, type, hpMult); R.t += fight; R.kills += killsDuring || 0; Sim.bossKilled(R, e); return e; }
+  ok(D.gameVersion === '1.0.0' && typeof SC.perSecond === 'number', 'gameVersion and score weights live in data.js');
+  ok(Sim.score(at(300, 5000)) === Math.round(300 * SC.perSecond + 5000 * SC.perKill), 'score = seconds and kills weighted, no bosses');
+  ok(Sim.score(at(300, 5001)) > Sim.score(at(300, 5000)), 'same time, more kills scores higher');
+  ok(Sim.score(at(301, 5000)) > Sim.score(at(300, 5000)), 'same kills, more time scores higher');
+  var f = at(360, 8000), s = at(360, 8000); boss(f, 'gloop', 1, 20); boss(s, 'gloop', 1, 60); s.t = f.t = 500; 
+  ok(Sim.score(f) > Sim.score(s) && f.bossFights[0] === 20, 'same time and kills, faster boss kill scores higher');
+  var late = at(360, 8000); boss(late, 'gloop', 1, 500);
+  ok(late.bossBonus === SC.bossBase, 'a boss kill slower than par still earns the base bonus, never less');
+  var eb = En.spawnBoss(at(900, 1), 'gloop', 1 + D.BAL.endless.bossHpStep);
+  ok(Math.abs(eb.par - SC.bossPar * 1.6) < 1e-9, 'endless boss par scales with its HP multiplier');
+
+  /* Stalling the final boss: every extra second, with heavy farming, must never raise the score. */
+  var prev = Infinity, mono = true, delays = [1, 5, 30, 60, 119, 120, 121, 300, 900];
+  delays.forEach(function (d) { var R = at(720, 21000); boss(R, 'hex', 1, d, d * 500); var v = Sim.score(R); if (v > prev) mono = false; prev = v; });
+  ok(mono, 'a faster final boss kill never scores lower, even farming 500 kills per second while stalling');
+  var spawnOnly = at(720, 21000), stall = at(720, 21000); En.spawnBoss(spawnOnly, 'hex', 1); En.spawnBoss(stall, 'hex', 1); stall.t += 600; stall.kills += 99999;
+  ok(Sim.score(stall) === Sim.score(spawnOnly), 'dying after stalling the final boss scores the same as at its spawn');
+  var w = at(720, 21000); boss(w, 'hex', 1, 10, 300);
+  ok(w.won && Sim.score(w) > Sim.score(stall), 'winning beats stalling and dying');
+  var en = at(720, 21000); boss(en, 'hex', 1, 10, 300); var before = Sim.score(en); Sim.continueEndless(en); en.t += 60; en.kills += 1000;
+  ok(Sim.score(en) === before + 60 * SC.perSecond + 1000 * SC.perKill, 'time and kills count again after continuing into endless');
+
+  var hard = at(300, 5000, { diff: 'hard' }), old = SC.diffMult.hard; SC.diffMult.hard = 1.5;
+  ok(Sim.score(hard) === Math.round((300 * SC.perSecond + 5000 * SC.perKill) * 1.5), 'difficulty multiplier scales the score');
+  var ch = at(300, 5000, { challenge: 'ch_glass' }); SC.diffMult.normal = 3;
+  ok(Sim.score(ch) === Math.round((300 * SC.perSecond + 5000 * SC.perKill) * SC.challengeMult), 'challenge runs ignore the difficulty multiplier');
+  SC.diffMult.hard = old; SC.diffMult.normal = 1;
+
+  ok(Sim.board(at(1, 1)) === 'std-normal' && Sim.board(at(1, 1, { diff: 'overdrive' })) === 'std-overdrive', 'standard runs go to std-<difficulty>');
+  ok(Sim.board(w) === 'std-normal' && Sim.board(en) === 'endless-normal', 'a win stays on std; continuing past the win moves to endless');
+  var chw = at(720, 100, { challenge: 'ch_horde' }); boss(chw, 'hex', 1, 10); Sim.continueEndless(chw);
+  ok(Sim.board(chw) === 'chal-ch_horde', 'a challenge run stays on its challenge board either way');
+
+  var sum = Sim.runSummary(en, 'dead'), rules = require('fs').readFileSync(require('path').join(__dirname, '..', 'firestore.rules'), 'utf8');
+  var allowed = rules.slice(rules.indexOf('hasOnly('), rules.indexOf('hasAll(')).match(/'[A-Za-z]+'/g).map(function (x) { return x.replace(/'/g, ''); });
+  ok(Object.keys(sum).every(function (k) { return allowed.indexOf(k) >= 0; }) && allowed.length === Object.keys(sum).length + 2, 'run summary fields match firestore.rules (uid and createdAt are added at send time)');
+  ok(Number.isInteger(sum.score) && sum.mode === 'endless' && sum.ended === 'dead' && sum.won === true && sum.gameVersion === D.gameVersion && sum.seed === 'UNIT', 'run summary carries board, version, seed and an integer score');
+  ok(JSON.stringify(sum).length < 1500 && Array.isArray(sum.build.weapons) && Array.isArray(sum.build.pets), 'run summary is small and lists the build by id');
+})();
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

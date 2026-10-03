@@ -8,7 +8,8 @@
   'use strict';
   var PSO = window.PSO, C = PSO.DATA.ONLINE;
   var O = PSO.Online = { available: false, state: 'offline', nick: '', uid: '', message: '' };
-  var listeners = [], auth = null, db = null, started = false, refused = false, checkId = 0;
+  var listeners = [], auth = null, db = null, started = false, refused = false, checkId = 0, flushing = false;
+  var QKEY = 'pso_online_queue_v1';
 
   function set(state, message) {
     O.state = state; O.message = message || '';
@@ -42,6 +43,7 @@
         var d = doc.data() || {};
         O.nick = String(d.nick || 'Player').slice(0, C.nickMax); O.uid = uid;
         set('allowed');
+        flushQueue();
       } else refuse();
     }, function (e) {
       if (id !== checkId) return;
@@ -94,6 +96,49 @@
     if (!auth) return;
     withTimeout(auth.signOut(), 'Signing out').catch(function () { set('error', 'Could not sign out. Try again.'); });
   };
+  /* ---------- Run submission and the retry queue ---------- */
+  function readQueue() {
+    try { var q = JSON.parse(window.localStorage.getItem(QKEY)); return Array.isArray(q) ? q : []; } catch (e) { return []; }
+  }
+  function writeQueue(q) {
+    try { window.localStorage.setItem(QKEY, JSON.stringify(q.slice(-C.queueCap))); } catch (e) { /* storage blocked: the run is simply not queued */ }
+  }
+  O.queueLength = function () { return readQueue().length; };
+  function addRun(run) {
+    var doc = {}, k;
+    for (k in run) doc[k] = run[k];
+    doc.createdAt = window.firebase.firestore.FieldValue.serverTimestamp();
+    return withTimeout(db.collection('runs').add(doc), 'Sending the score');
+  }
+  /* A refusal by the server (rules or bad data) will never succeed on retry, so it is not queued. */
+  function permanent(e) { return !!e && (e.code === 'permission-denied' || e.code === 'invalid-argument'); }
+
+  /* Resolves, never rejects: { ok: true } or { ok: false, queued: bool }. Only sends while allowed. */
+  O.submitRun = function (summary) {
+    if (O.state !== 'allowed' || !db) return Promise.resolve({ ok: false, queued: false });
+    var run = {}, k;
+    for (k in summary) run[k] = summary[k];
+    run.uid = O.uid;
+    return addRun(run).then(function () { return { ok: true }; }, function (e) {
+      if (permanent(e)) return { ok: false, queued: false };
+      var q = readQueue(); q.push(run); writeQueue(q);
+      return { ok: false, queued: true };
+    });
+  };
+  /* After a successful sign-in, send this player's queued runs, oldest first. Stops at the first
+     network failure. Runs queued by another player on this PC wait for that player's sign-in. */
+  function flushQueue() {
+    if (flushing || O.state !== 'allowed') return;
+    var q = readQueue(), i = -1, j;
+    for (j = 0; j < q.length; j++) if (q[j] && q[j].uid === O.uid) { i = j; break; }
+    if (i < 0) return;
+    flushing = true;
+    var run = q[i];
+    function drop() { var cur = readQueue(), n; for (n = 0; n < cur.length; n++) if (JSON.stringify(cur[n]) === JSON.stringify(run)) { cur.splice(n, 1); break; } writeQueue(cur); }
+    addRun(run).then(function () { drop(); flushing = false; flushQueue(); },
+                     function (e) { flushing = false; if (permanent(e)) { drop(); flushQueue(); } });
+  }
+
   O.retry = function () {
     if (!O.available) { O.init(); return; }
     if (auth.currentUser) checkAllowed(auth.currentUser); else set('signedOut');

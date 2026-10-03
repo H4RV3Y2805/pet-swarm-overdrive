@@ -78,7 +78,7 @@
       level: 1, xp: 0, xpNext: xpFor(1), pending: 0, chests: 0,
       rerolls: BAL.rerolls + res.r_reroll + (ach.ach_evolve ? 1 : 0) + (cfg.spec === 'hybrid' ? 1 : 0),
       choices: BAL.choices + res.r_choice, revives: res.r_revive,
-      kills: 0, gemsGot: 0, dmgBy: {}, dmgTaken: 0, bossKills: 0, bossesDefeated: [], maxTurrets: 0, turretsDeployed: 0,
+      kills: 0, gemsGot: 0, dmgBy: {}, dmgTaken: 0, bossKills: 0, bossesDefeated: [], bossBonus: 0, bossFights: [], freeze: null, exclT: 0, exclKills: 0, maxTurrets: 0, turretsDeployed: 0,
       evolved: 0, synCount: 0, abilityUses: 0, bonusSparks: 0,
       spawnAcc: 0, nextEnc: 0, bossIdx: 0, boss: null, nextEndlessBoss: 0, endlessLoops: 0,
       hatchKills: 0, frenzyCd: 20, frenzyT: 0, rallyT: 0, haloStacks: 0, haloT: 0, barrierCd: 0, barrierReady: false,
@@ -526,6 +526,10 @@
   /* Called when the final boss dies. */
   Sim.bossKilled = function (R, e) {
     R.bossKills++; R.boss = null;
+    var fight = R.t - (e.bornT || 0), SC = BAL.score;
+    R.bossBonus += SC.bossBase + SC.bossSpeed * Math.max(0, 1 - fight / (e.par || SC.bossPar));
+    R.bossFights.push(fight);
+    if (R.freeze) { R.exclT += R.t - R.freeze.t; R.exclKills += R.kills - R.freeze.kills; R.freeze = null; }
     if (R.bossesDefeated.indexOf(e.type) < 0) R.bossesDefeated.push(e.type);
     R.pickups.push({ kind: 'chest', x: e.x, y: e.y, t: 0 });
     for (var i = 0; i < 24; i++) Sim.addGem(R, e.x + (R.rngDrop.next() - 0.5) * 160, e.y + (R.rngDrop.next() - 0.5) * 160, Math.ceil(e.xp / 24));
@@ -533,6 +537,27 @@
     Sim.shake(R, 14); Sim.ring(R, e.x, e.y, 30, 320, 0.6, '#ffffff', true);
     Sim.banner(R, e.name + ' defeated!', 'good');
     if (e.final && !R.won) { R.won = true; R.state = 'won'; sfx('win'); }
+  };
+
+  /* ---------- Leaderboard score, board and run summary (pure functions of the run) ---------- */
+  Sim.score = function (R) {
+    var SC = BAL.score, exT = R.exclT, exK = R.exclKills;
+    if (R.freeze) { exT += R.t - R.freeze.t; exK += R.kills - R.freeze.kills; }   /* run ended with the final boss alive */
+    var mult = R.challenge ? SC.challengeMult : (SC.diffMult[R.diffId] || 1);
+    return Math.max(0, Math.round(((R.t - exT) * SC.perSecond + (R.kills - exK) * SC.perKill + R.bossBonus) * mult));
+  };
+  Sim.board = function (R) {
+    return R.challenge ? 'chal-' + R.challenge : (R.endless ? 'endless-' : 'std-') + R.diffId;
+  };
+  /* ended: 'dead', 'won' or 'quit'. Contains no personal data. */
+  Sim.runSummary = function (R, ended) {
+    return {
+      board: Sim.board(R), gameVersion: D.gameVersion, mode: R.challenge ? 'challenge' : R.endless ? 'endless' : 'standard',
+      difficulty: R.diffId, arena: R.arenaId, character: R.charId, seed: R.seedStr, challengeId: R.challenge || null,
+      ended: ended, won: !!R.won, timeSec: Math.round(R.t * 10) / 10, kills: R.kills, bossKills: R.bossKills, level: R.level,
+      score: Sim.score(R),
+      build: { weapons: R.weapons.map(function (w) { return w.id; }), pets: R.pets.map(function (p) { return p.id; }), synergies: Object.keys(R.syn) }
+    };
   };
 
   Sim.continueEndless = function (R) {

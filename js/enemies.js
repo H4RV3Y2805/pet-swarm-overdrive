@@ -82,6 +82,9 @@
     e.speed = B.speed; e.dmg = e.touch = B.dmg * dmgScale(R); e.xp = B.xp;
     e.state = 'move'; e.st = 2; e.seq = 0; e.ang = 0; e.lang = 0; e.acc = 0; e.charges = 0; e.spawnT = 0.8;
     e.final = (type === 'hex' && !R.won);
+    /* Leaderboard score: fight timer in simulation time; par grows with the endless HP multiplier. */
+    e.bornT = R.t; e.par = BAL.score.bossPar * (hpMult || 1);
+    if (e.final && BAL.score.freezeDuringFinalBoss) R.freeze = { t: R.t, kills: R.kills };
     R.boss = e;
     Sim.banner(R, 'BOSS: ' + B.name, 'boss'); Sim.sfx('boss'); Sim.shake(R, 10);
     return e;
