@@ -1,0 +1,45 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // A signed-in user is a player only if Len has created players/{their uid} in the console.
+    function isPlayer() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/players/$(request.auth.uid));
+    }
+
+    // Player list: players may read it (to show nicknames). Nobody can write it from the game.
+    match /players/{uid} {
+      allow read: if isPlayer();
+      allow write: if false;
+    }
+
+    // Runs: players may read all runs and add their own. Nobody can change or delete a run.
+    match /runs/{runId} {
+      allow read: if isPlayer();
+      allow create: if isPlayer()
+        && request.resource.data.keys().hasOnly(
+             ['uid','board','gameVersion','mode','difficulty','arena','character',
+              'seed','challengeId','ended','won','timeSec','kills','bossKills',
+              'level','score','build','createdAt'])
+        && request.resource.data.keys().hasAll(
+             ['uid','board','gameVersion','ended','score','timeSec','createdAt'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.board is string
+        && request.resource.data.board.size() <= 40
+        && request.resource.data.gameVersion is string
+        && request.resource.data.gameVersion.size() <= 20
+        && request.resource.data.ended in ['dead','won','quit']
+        && request.resource.data.score is int
+        && request.resource.data.score >= 0
+        && request.resource.data.score <= 1000000000
+        && request.resource.data.timeSec is number
+        && request.resource.data.timeSec >= 0
+        && request.resource.data.timeSec <= 86400;
+      allow update, delete: if false;
+    }
+
+    // Anything not matched above is denied.
+  }
+}

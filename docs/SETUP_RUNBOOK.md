@@ -44,12 +44,11 @@ Do not run this section until `firestore.rules`, `firestore.indexes.json` and `f
 
 The project also holds the other app's Realtime Database. `firebase.json` in this repo must contain only a `firestore` block, and the deploy command must keep `--only firestore`. A plain `firebase deploy` is never used here. With both in place, the Realtime Database and its rules are not touched.
 
-In the repo folder:
+The repo's `.firebaserc` already names the project, so no `firebase use` step is needed. In the repo folder:
 
 ```
 npm install -g firebase-tools
 firebase login
-firebase use --add          (pick <project>)
 firebase deploy --only firestore
 ```
 

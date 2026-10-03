@@ -28,7 +28,9 @@
 - [x] `package.json` (developer dependency only) and CI workflow: syntax check, logic tests, browser tests
 - [x] Stage 2 documents in `docs/`, all design decisions closed
 - [x] Firebase console setup: web app, Google provider, authorised domain, Firestore created (no rules deployed yet)
-- [ ] Google sign-in in the game
+- [x] Google sign-in in the game: `js/online.js`, menu panel, player list check, 8 s timeout, soft failure (tested against a fake SDK only)
+- [x] Firestore rules and indexes in the repo (not yet deployed, not yet emulator-tested)
+- [ ] Sign-in checked on the live site with the three real accounts
 - [ ] Firestore leaderboards and security rules
 
 ## Test results

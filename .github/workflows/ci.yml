@@ -29,3 +29,5 @@ jobs:
         run: npm run test:logic
       - name: Browser tests
         run: npm run test:browser
+      - name: Online layer tests (fake Firebase)
+        run: npm run test:online
