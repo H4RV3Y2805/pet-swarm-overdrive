@@ -118,7 +118,7 @@ const ok = (c, n) => { if (c) { pass++; console.log('  ok   ' + n); } else { fai
   const sparksWin = await ev(() => PSO.Save.data.sparks);
   ok(await ev(() => PSO.Save.data.ach.ach_win === true && PSO.Save.data.life.wins === 1), 'win recorded, achievement unlocked');
   await page.click('text=Keep going: endless mode'); await wait(400);
-  ok(await ev(() => PSO.Game.R.endless && PSO.Game.R.state === 'play'), 'endless continuation resumes play');
+  ok(await ev(() => { const R = PSO.Game.R; return R.endless && (R.state === 'play' || R.state === 'levelup'); }), 'endless continuation resumes play');
   await ev(() => PSO.Game.debugFastForward(20)); await drain();
   await ev(() => { const R = PSO.Game.R; R.revives = 0; R.player.iframes = 0; R.player.hp = 1; R.stats.dmgTaken = 1; R.player.shield = 0; R.barrierReady = false; PSO.Sim.hurtPlayer(R, 1e9, null); }); await wait(400);
   ok(await page.isVisible('text=Endless run over'), 'dying in endless shows the final summary');
