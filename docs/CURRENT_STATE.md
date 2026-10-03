@@ -69,7 +69,10 @@ Real hardware with a GPU was not measured.
 - Kill rate during boss fights, needed to confirm the score's speed term.
 - The Firestore rules (in the repo, not emulator-tested).
 - Sign-in against real Firebase. Only a fake SDK has been used.
-- Exact seeded replay. Gem scatter in `js/sim.js` (about lines 436 to 438) draws from the cosmetic generator `PSO.fxRng`, which is seeded from `Math.random`. Two runs of one seed with identical input therefore diverge (measured headless: 485 and 491 kills at 90 s). Present since Stage 1. Not caused by the online layer.
+
+## Fixed since Stage 1
+
+- Seeded replay. Gem scatter drew from the cosmetic generator, so one seed with identical input diverged. It now uses a seeded stream (`R.rngDrop`). Every seed plays out differently from before this fix. Logic test added.
 
 ## Facts the Stage 2 design depends on
 

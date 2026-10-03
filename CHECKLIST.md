@@ -30,7 +30,8 @@
 - [x] Firebase console setup: web app, Google provider, authorised domain, Firestore created (no rules deployed yet)
 - [x] Google sign-in in the game: `js/online.js`, menu panel, player list check, 8 s timeout, soft failure (tested against a fake SDK only)
 - [x] Firestore rules and indexes in the repo (not yet deployed, not yet emulator-tested)
-- [ ] Sign-in checked on the live site with the three real accounts
+- [ ] Sign-in checked on the live site with the three real accounts (Len and Aiden done, Natalie to do)
+- [x] Seeded runs replay exactly: gem scatter moved to a seeded stream
 - [ ] Firestore leaderboards and security rules
 
 ## Test results
