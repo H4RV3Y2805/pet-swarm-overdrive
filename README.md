@@ -81,6 +81,19 @@ tools/                developer tests (need Node.js; browser tests also need Pla
 CHECKLIST.md          what is done, what was tested, ideas for later
 ```
 
+## Developer tests
+
+Not needed to play. Needs Node.js 22 or later.
+
+```
+npm ci                              installs Playwright (developer dependency only)
+npx playwright install chromium     one-off browser download
+npm test                            syntax check, 40 logic tests, 47 browser tests
+```
+
+`npm run check`, `npm run test:logic` and `npm run test:browser` run each part alone.
+GitHub Actions (`.github/workflows/ci.yml`) runs the same three steps on every push and pull request to `main`.
+
 ## Tuning
 
 Everything numeric is in `js/data.js`: `BAL` (global), `WEAPONS`, `PETS`, `TECH`, `SYNERGIES`, `ENEMIES`, `BOSSES`,
