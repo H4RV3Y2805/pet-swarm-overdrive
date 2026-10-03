@@ -17,6 +17,12 @@
     dmgScalePerMin: 0.06,
     bossTimes: [360, 720],            // seconds: Gloop King, Hex Engine (final)
     endless: { bossEvery: 180, bossHpStep: 0.6 },
+    /* Leaderboard score = round((seconds*perSecond + kills*perKill + boss bonuses) * multiplier).
+       Boss bonus per boss killed = bossBase + bossSpeed * max(0, 1 - fightSeconds / bossPar).
+       While the FINAL boss of a standard run is alive, seconds and kills do not count, so
+       stalling that fight can never raise the score. Weights are provisional. */
+    score: { perSecond: 10, perKill: 1, bossBase: 2000, bossSpeed: 12000, bossPar: 120, freezeDuringFinalBoss: true,
+             diffMult: { normal: 1, hard: 1, overdrive: 1 }, challengeMult: 1 },
     sparks: { perKills: 80, perMin: 6, perBoss: 40, win: 100 },   // 1 Spark per 80 kills, 6 per minute survived
     turret: { interval: 6, life: 16, dmg: 9, cd: 0.45, range: 340, shotSpeed: 600 },
     trap: { interval: 2.5, max: 6, dmg: 30, radius: 62, root: 1 },
@@ -343,6 +349,8 @@
   };
 
   PSO.DATA = {
+    /* Bump only for releases that change gameplay or balance: every bump starts fresh leaderboards. */
+    gameVersion: '1.0.0',
     BAL: BAL, BRANCHES: BRANCHES, CHARACTERS: CHARACTERS, WEAPONS: WEAPONS, PETS: PETS, TECH: TECH, SYNERGIES: SYNERGIES,
     SPECS: SPECS, ENEMIES: ENEMIES, BOSSES: BOSSES, WAVES: WAVES, WAVE_ENDLESS_RATE_PER_MIN: WAVE_ENDLESS_RATE_PER_MIN,
     BOSS_SPAWN_SLOWDOWN: BOSS_SPAWN_SLOWDOWN, ENCOUNTERS: ENCOUNTERS, ENCOUNTER_GAP: ENCOUNTER_GAP, ARENAS: ARENAS, DIFFS: DIFFS,

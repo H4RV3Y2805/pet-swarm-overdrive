@@ -32,7 +32,10 @@
 - [x] Firestore rules and indexes in the repo (not yet deployed, not yet emulator-tested)
 - [ ] Sign-in checked on the live site with the three real accounts (Len and Aiden done, Natalie to do)
 - [x] Seeded runs replay exactly: gem scatter moved to a seeded stream
-- [ ] Firestore leaderboards and security rules
+- [x] Score formula (`BAL.score`), `gameVersion`, run submission at final run end, retry queue (tested against a fake SDK only)
+- [ ] Run submission checked on the live site
+- [ ] Leaderboard screen, Firestore indexes deployed
+- [ ] Rules tests in the emulator
 
 ## Test results
 

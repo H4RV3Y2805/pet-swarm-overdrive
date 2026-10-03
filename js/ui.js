@@ -404,12 +404,16 @@
     if (k === 'ability') return R.char.ability.name;
     return SRC[k] || k;
   }
+  UI.setSubmitStatus = function (text, bad) {
+    var e = document.getElementById('submit-status');
+    if (e) { e.textContent = text; e.className = (bad ? 'error' : 'hint') + ' submit-status'; }
+  };
   UI.showSummary = function (R, bank, reason) {
     var won = R.won, s = screen('summary overlay'), k;
     var title = reason === 'won' ? 'Victory! The Hex Engine is scrap.' : reason === 'quit' ? 'Run ended' : won ? 'Endless run over' : 'Defeated';
     add(s, el('h2', won ? 'good' : '', title));
     var stats = el('div', 'grid g4 stats');
-    [['Time survived', mmss(R.t)], ['Level', R.level], ['Enemies defeated', R.kills], ['Bosses defeated', R.bossKills],
+    [['Score', Sim.score(R).toLocaleString()], ['Time survived', mmss(R.t)], ['Level', R.level], ['Enemies defeated', R.kills], ['Bosses defeated', R.bossKills],
      ['Character', R.char.name], ['Arena', R.arena.name], ['Difficulty', R.diff.name], ['Seed', R.seedStr]].forEach(function (r) {
       var b = el('div', 'stat'); add(b, el('div', 'stat-v', String(r[1])), el('div', 'stat-k', r[0])); stats.appendChild(b);
     });
@@ -446,6 +450,11 @@
     if (goal) { var p = Save.achProgress(goal); add(rew, el('div', 'card-sub', 'Next unlock goal: ' + goal.name + '. ' + goal.desc + ' Reward: ' + goal.reward), progressBar(p.cur, p.goal, goal.fmt === 'time' ? mmss(p.cur) + ' / ' + mmss(p.goal) : Math.floor(p.cur) + ' / ' + p.goal)); }
     s.appendChild(rew);
 
+    if (PSO.Online && PSO.Online.state !== 'offline') {
+      var st = el('div', 'hint submit-status', reason === 'won' ? 'The score is sent when the run ends: keep going, or leave this screen.' : '');
+      st.id = 'submit-status'; s.appendChild(st);
+      if (R.submitMsg) UI.setSubmitStatus(R.submitMsg.text, R.submitMsg.bad);
+    }
     var foot = el('div', 'row center');
     if (reason === 'won') foot.appendChild(button('Keep going: endless mode', 'primary', function () { game.continueEndless(); }));
     add(foot, button('Play again (new seed)', reason === 'won' ? '' : 'primary', function () { var c = JSON.parse(JSON.stringify(R.cfg)); c.seed = ''; game.startRun(c); }),

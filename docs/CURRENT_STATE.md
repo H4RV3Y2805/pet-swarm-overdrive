@@ -11,6 +11,7 @@ Snapshot date: 2026-10-03. Stage 1 figures below are as reported when Stage 1 wa
 - All design decisions closed: see `docs/STAGE2_SPEC.md` section 13.
 - Milestone 2 closed: deploy workflow live, only `index.html`, `css/`, `js/` published, save export and import checked by Len.
 - Milestone 3 code: `js/firebase-config.js`, `js/online.js`, menu sign-in panel, `firestore.rules`, indexes. 28 online tests against a fake SDK (`npm run test:online`). Browser suite is now 48 tests; syntax check covers 23 files.
+- Milestone 4 code: score (`BAL.score`), boss fight timer, `tainted` flag, one submission at final run end, retry queue. Tests now: 61 logic, 48 browser, 49 online.
 
 ## What exists
 
@@ -22,7 +23,7 @@ A complete, playable offline game: `index.html`, `css/style.css`, 14 scripts und
 - `js/data.js` holds every balance value and content definition (`BAL`, `WEAPONS`, `PETS`, `TECH`, `SYNERGIES`, `ENEMIES`, `BOSSES`, `WAVES`, `DIFFS`, `RESEARCH`, `ACHIEVEMENTS`, `CHALLENGES`).
 - `js/rng.js` provides seeded gameplay streams via `makeRng(seed)` and a separate cosmetic generator `PSO.fxRng`. Particles and other cosmetics must use the cosmetic generator so they never disturb a seeded run.
 - `js/save.js` owns persistence: browser local storage, JSON export and import with validation, reward banking at run end. A run in progress is not saved. The local storage key is `pso_save_v1`, already namespaced for the shared `github.io` origin. Save format `VERSION = 1`.
-- There is no game version constant yet. Stage 2 adds `gameVersion` to `js/data.js`.
+- `gameVersion` is in `js/data.js` (`PSO.DATA.gameVersion`, `1.0.0`). Bump it only for gameplay or balance changes.
 - Artwork is drawn procedurally with Canvas 2D at start-up (`js/sprites.js`). Audio is synthesised (`js/audio.js`). There are no asset files.
 - The game makes no network requests.
 
@@ -66,7 +67,8 @@ Real hardware with a GPU was not measured.
 
 - A full run on the Pages URL, and save export from `file://` then import on Pages (Len, milestone 2).
 - Whether the three Firebase compat files load from gstatic at 12.19.0 (not reachable from the sandbox).
-- Kill rate during boss fights, needed to confirm the score's speed term.
+- Run submission against real Firestore and the deployed rules. Only a fake SDK has been used.
+- The two composite indexes are not deployed (needed in milestone 5).
 - The Firestore rules (in the repo, not emulator-tested).
 - Sign-in against real Firebase. Only a fake SDK has been used.
 
@@ -79,5 +81,5 @@ Real hardware with a GPU was not measured.
 - `Game.endRun` (`js/main.js`) sets state `quit` and calls `finish('quit')`, which banks Sparks exactly as a death does.
 - Endless is a continuation of a won run: `Game.continueEndless` then `Sim.continueEndless`. `Save.bankRun` is incremental for this reason.
 - Boss schedule: `BAL.bossTimes = [360, 720]`. Endless bosses every 180 s, each 60% tougher (`BAL.endless.bossHpStep`).
-- Run statistics already available: `R.kills`, `R.t`, `R.bossKills`, `R.level`, `R.gemsGot`, `R.won`, `R.diffId`, `R.challenge`, `R.dmgBy`, `R.dmgTaken`, `R.seedStr`. No score value exists yet.
+- Run statistics: `R.kills`, `R.t`, `R.bossKills`, `R.level`, `R.gemsGot`, `R.won`, `R.diffId`, `R.challenge`, `R.dmgBy`, `R.dmgTaken`, `R.seedStr`, plus `R.bossBonus`, `R.bossFights`, `R.tainted`, `R.submitted`. Score: `Sim.score(R)`.
 - Difficulties: `normal`, `hard`, `overdrive`. Challenges: `ch_glass`, `ch_pets`, `ch_horde`, each fixed seed, meadow, normal.

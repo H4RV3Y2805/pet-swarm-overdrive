@@ -172,7 +172,8 @@ bossBonus = base + speed * max(0, 1 - fightSeconds / par)        per boss killed
 - `fightSeconds` is simulation time from boss spawn to boss death, so it is deterministic for a seed and input sequence.
 - In endless, `par` is scaled by the boss HP multiplier (`BAL.endless.bossHpStep`, 60% tougher per endless boss).
 - Requirements: same time with more kills scores higher; same time and kills with a faster boss kill scores higher.
-- Stalling constraint: in a standard run the final boss kill ends the run, so a faster kill also means less time and fewer kills. The speed bonus must fall faster per second than time and kills accrue. With the provisional weights the bonus falls 100 points per second inside par; time accrues 10 per second; kills must therefore accrue under 90 per second during a boss fight. Kill rate during boss fights: not yet measured. A test must prove a faster kill never scores lower.
+- Stalling rule (`freezeDuringFinalBoss`): while the final boss of a run is alive, seconds and kills do not add to the score. Only the speed of that kill does. Without this, stalling the final boss past par would pay, because time and kills would keep accruing while the bonus had stopped falling. Counting resumes if the player continues into endless. A logic test proves a faster final kill never scores lower, and that stalling then dying scores the same as dying at the boss's spawn.
+- Implemented in `Sim.score`, `Sim.board` and `Sim.runSummary` (`js/sim.js`), all pure functions of the run.
 - Reference: a typical autoplayer win on Normal scores about 52,000 (roughly 40% kills, 14% time, 46% bosses).
 
 ## 8. Run eligibility and submission
@@ -183,7 +184,9 @@ Every human run submits: death, victory, and "End run" from the pause menu.
 
 Submission happens exactly once, at the final end of the run. Winning shows the victory screen but does not submit, because the player may continue into endless (`Game.continueEndless`). The run submits when it finally ends: leaving the victory screen without continuing, or death or "End run" during endless. A guard on the run prevents a second submission.
 
-If submission fails, the run is queued in local storage (cap 20, oldest dropped) and retried after the next successful sign-in. Queued runs keep the `gameVersion` they were played on. If the player is not signed in, the run is not queued.
+If submission fails, the run is queued in local storage (key `pso_online_queue_v1`, cap 20, oldest dropped) and retried after the next successful sign-in. Queued runs keep the `gameVersion` they were played on and are sent only when the player who played them signs in. If the player is not signed in, the run is not queued. A run the server refuses (rules or bad data) is not queued, because a retry cannot succeed. The queue is not part of the save file and is not exported.
+
+Known limitation: closing the tab on the victory screen, before continuing or leaving it, loses that run's submission.
 
 ## 9. Security rules (draft, untested)
 
@@ -255,9 +258,9 @@ Required rule tests: signed-out read denied; signed-in non-player read and creat
 | # | Milestone | State | Done when |
 |---|---|---|---|
 | 1 | Repo | Done | Stage 1 code committed and tagged `v1.0.0`; `.gitignore`; CI runs syntax, logic and browser tests |
-| 2 | Pages | In progress | Deploy workflow live; game plays at the Pages URL; save export and import verified between `file://` and Pages |
-| 3 | Sign-in | Unblocked | Sign-in and sign-out on the main menu; allowlist enforced; all three real accounts tested |
-| 4 | Submit | Not started | `gameVersion`; boss fight timer; score; `tainted` flag; run written at final run end; retry queue |
+| 2 | Pages | Done | Deploy workflow live; game plays at the Pages URL; save export and import verified between `file://` and Pages |
+| 3 | Sign-in | Done except Natalie's account | Sign-in and sign-out on the main menu; allowlist enforced; all three real accounts tested |
+| 4 | Submit | Code complete, not verified against live Firestore | `gameVersion`; boss fight timer; score; `tainted` flag; run written at final run end; retry queue |
 | 5 | Boards | Not started | Leaderboard screen with nine boards, best and latest per player, seed replay |
 | 6 | Hardening | Not started | Rules tests pass in the emulator; API key referrer restriction; README and CHECKLIST updated |
 

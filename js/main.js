@@ -9,7 +9,9 @@
   /* ---------- Run flow ---------- */
   Game.startRun = function (cfg) {
     A.init();
+    finalise(Game.R, 'won');   /* leaving a victory screen without continuing ends that run */
     Game.R = Sim.newRun(cfg, Save.data); Game.paused = false; keys = {};
+    if (Game.bot || perf.rec) Game.R.tainted = true;
     UI.hide(); A.musicStart(); last = performance.now();
   };
   Game.pause = function () {
@@ -31,16 +33,38 @@
     var R = Game.R, bank = Save.bankRun(R);
     A.musicStop(); Game.paused = false;
     UI.showSummary(R, bank, reason);
+    if (reason !== 'won') finalise(R, reason);   /* a win is not final: the player may continue into endless */
+  }
+  /* Send the run to the leaderboard exactly once, when it has finally ended. Never blocks the game.
+     Runs touched by the autoplayer or a debug hook (R.tainted) are never sent. */
+  function finalise(R, ended) {
+    if (!R || R.submitted) return;
+    if (ended === 'won' && R.state !== 'won') return;
+    R.submitted = true;
+    var O = PSO.Online;
+    if (!O || O.state === 'offline') return;
+    if (R.tainted || Game.bot) { status(R, 'Autoplayer or test run: score not sent.', false); return; }
+    if (O.state !== 'allowed') { status(R, 'Not signed in: score not sent to the leaderboard.', false); return; }
+    status(R, 'Sending score...', false);
+    O.submitRun(Sim.runSummary(R, ended)).then(function (r) {
+      status(R, r.ok ? 'Score sent to the leaderboard.' : r.queued ? 'Could not send the score. It is saved on this PC and will be sent after the next sign-in.' : 'Could not send the score.', !r.ok);
+    });
+  }
+  function status(R, text, bad) {
+    R.submitMsg = { text: text, bad: bad };
+    if (Game.R === R && UI.current === 'summary') UI.setSubmitStatus(text, bad);
+    else if (bad) UI.toast(text, true);
   }
   Game.endRun = function () { var R = Game.R; if (!R) return; R.state = 'quit'; finish('quit'); };
   Game.continueEndless = function () {
     var R = Game.R; if (!R || R.state !== 'won') return;
     Sim.continueEndless(R); R.shown = false; keys = {}; UI.hide(); A.musicStart(); last = performance.now();
   };
-  Game.toMenu = function () { Game.R = null; Game.paused = false; A.musicStop(); UI.showMenu(); };
+  Game.toMenu = function () { finalise(Game.R, 'won'); Game.R = null; Game.paused = false; A.musicStop(); UI.showMenu(); };
 
   function botPick() {
     if (!Game.bot) return;
+    if (Game.R) Game.R.tainted = true;
     setTimeout(function () { var R = Game.R; if (R && R.state === 'levelup' && R.offer) Game.pickUpgrade(R.offer.options.indexOf(PSO.Bot.pick(R))); }, 120);
   }
 
@@ -108,6 +132,7 @@
   /* Advance the simulation quickly without drawing, using the autoplayer. */
   Game.debugFastForward = function (seconds) {
     var R = Game.R, end = R.t + seconds, bi = { mx: 0, my: 0, ability: false }, guard = 0;
+    R.tainted = true;
     while (R.t < end && guard++ < 1e6) {
       if (R.state === 'levelup') { Up.apply(R, PSO.Bot.pick(R)); if (R.pending > 0) Up.offer(R); else R.state = 'play'; continue; }
       if (R.state !== 'play') break;
@@ -118,8 +143,9 @@
     last = performance.now();
     return { t: R.t, state: R.state, level: R.level, enemies: R.enemies.length };
   };
-  perf.start = function () { perf.rec = []; };
+  perf.start = function () { perf.rec = []; if (Game.R) Game.R.tainted = true; };
   perf.stop = function () {
+    if (Game.R) Game.R.tainted = true;
     var r = perf.rec || []; perf.rec = null;
     if (!r.length) return null;
     var fr = r.map(function (x) { return x[0]; }).sort(function (a, b) { return a - b; }), sum = function (k) { return r.reduce(function (s, x) { return s + x[k]; }, 0); };

@@ -89,6 +89,8 @@ CHECKLIST.md          what is done, what was tested, ideas for later
 
 Played from the GitHub Pages address, the main menu shows an optional "Sign in with Google" panel for the family leaderboards. Only accounts on the player list are accepted. The game stores a player ID and a nickname chosen by Len: no email, Google name or photo. Opened by double-click (`file://`), the game shows no sign-in panel and makes no network requests. If the sign-in service cannot be reached, the hosted game still plays and says leaderboards are unavailable.
 
+Every run shows a score on its summary screen. When signed in, each finished run (death, victory or "End run") is sent to the leaderboard once. Runs that used the autoplayer or a test hook are never sent. A send that fails is kept on the PC and retried after the next sign-in. Score weights are in `BAL.score` in `js/data.js`.
+
 ## Stage 2 documents
 
 `docs/STAGE2_SPEC.md` (design), `docs/SETUP_RUNBOOK.md` (console and command-line steps), `docs/CURRENT_STATE.md` (baseline and progress).
@@ -100,7 +102,7 @@ Not needed to play. Needs Node.js 22 or later.
 ```
 npm ci                              installs Playwright (developer dependency only)
 npx playwright install chromium     one-off browser download
-npm test                            syntax check, 42 logic tests, 48 browser tests, 28 online tests
+npm test                            syntax check, 61 logic tests, 48 browser tests, 49 online tests
 ```
 
 `npm run check`, `npm run test:logic`, `npm run test:browser` and `npm run test:online` run each part alone.
